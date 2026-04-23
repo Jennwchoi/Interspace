@@ -45,6 +45,8 @@ Imagine doesn't offer one type of expansion — it offers four, so users can pic
 
 ## How It Works
 
+I designed this architecture from scratch — every service chosen, routed, and integrated by me.
+
 A user's drawing moves through three AI services, each chosen for a specific role:
 
 ```
@@ -70,26 +72,19 @@ Supabase Edge Functions — request routing, API key security
           Compare & Get Inspired (UI)
 ```
 
-Each model was chosen for what it does best:
+**Echo is a single-shot call.** Gemini 2.0 Flash returns ASCII art, keywords, a visual description, and the imagePrompt for Imagine — all in one JSON response. One model, one call, four outputs.
 
-- **Gemini 2.0 Flash** — fast, cheap image analysis → ASCII reflection
-- **Llama 4 Scout on Groq's LPU infrastructure** — fast language inference → creative prompt generation
-- **DALL-E 2** — high-quality text-to-image → bold visual expansion
-- **Supabase Edge Functions** — backend middleware for routing and API key security
+**Response timing:**
+- **Echo:** ~5–7 seconds from stroke-pause (4s debounce + 1–3s inference)
+- **Imagine:** +6–12 seconds after Echo (Groq 1–2s + DALL-E 2 5–10s), throttled to once per 45 seconds
 
-This pipeline didn't happen overnight. An earlier exhibition using GPT-4 Vision for everything racked up a $200 API bill in a single day. The current architecture exists because simpler versions broke first.
+**Supabase Edge Functions** serve as an API proxy — handling request routing, API key protection, and CORS. No streaming, no DB sync, no rate limiting; AI APIs handle their own 429s.
 
 ---
 
 ## Research Foundation
 
-The two-role design is grounded in three decades of creativity research:
-
-- **Jansson & Smith (1991)** — *Design Fixation.* Similar examples cause designers to fixate, not expand.
-- **CHI 2024** — *AI Output & Creativity.* Predictable AI output increases fixation.
-- **Scientific Reports (2024)** — *Co-Creator Role.* AI as a co-creator (not an answer-provider) preserves creative self-efficacy.
-
-The insight: design fixation happens when AI confirms too closely. Creative self-efficacy grows when AI expands beyond. The answer isn't one reinterpretation — it's two.
+Grounded in research on design fixation and AI co-creation — full references in the thesis doc.
 
 ---
 
@@ -107,6 +102,8 @@ These findings redirected the project from *"providing ideas"* to *"revealing po
 ---
 
 ## Tech Stack
+
+Each choice was a tradeoff between speed, cost, and quality — not defaults.
 
 | Layer | Choice |
 |-------|--------|
@@ -175,23 +172,19 @@ Three principles shaped every interaction in Interspace:
 
 **Balance matters more than novelty.** Good AI doesn't replace thinking. It sits between confirmation and provocation — and the sweet spot shifts with intent.
 
+**Designing in code changed how I design.** Every architectural decision was a design decision — latency budgets, model selection, and API routing all shaped what the interaction could feel like.
+
 ---
 
 ## Built With Cursor + Claude
 
-The frontend was built in Cursor, pair-programmed with Claude. Design and engineering happened in the same working code — not as separate phases — so the gap between *"designed"* and *"shipping"* stayed small throughout.
+Designed and built end-to-end in Cursor with Claude. Design decisions were tested in working code, not static mockups — the gap between *"designed"* and *"shipping"* wasn't a handoff, it was the workflow.
 
 ---
 
 ## Status
 
 Active thesis project · Exhibiting May 2026
-
----
-
-## Acknowledgments
-
-Thanks to my advisors, my testers, the brilliant engineer Sean who rescued me every time the backend broke, classmates who helped bring this work to Korea — and everyone who drew something weird into the system and told me what didn't work.
 
 ---
 
