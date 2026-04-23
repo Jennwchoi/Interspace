@@ -1,0 +1,124 @@
+// Replicate API handler for Interspace creative modes
+// Uses ITP Replicate Proxy
+
+interface ReplicateRequest {
+  imageDataUrl: string;
+  mode: "opposite" | "whatif" | "expand" | "challenge";
+  userKeywords?: string[];
+}
+
+interface ReplicateResponse {
+  imageUrl: string;
+  mode: string;
+  prompt: string;
+}
+
+// Mode-specific prompt generators
+function generatePrompt(
+  mode: string,
+  keywords: string[] = []
+): string {
+  const keywordStr = keywords.join(", ");
+  
+  switch (mode) {
+    case "opposite":
+      return `Create the conceptual opposite: if the original is soft, make it sharp. If organic, make it geometric. If calm, make it chaotic. Invert the essence. ${keywordStr ? `Context: ${keywordStr}` : ""}`;
+    
+    case "whatif":
+      // Random unexpected combinations
+      const surpriseElements = [
+        "underwater", "on fire", "made of glass", 
+        "in a dream", "as architecture", "melting",
+        "as sound waves", "in negative space", "as a map",
+        "growing", "dissolving", "multiplying"
+      ];
+      const randomElement = surpriseElements[Math.floor(Math.random() * surpriseElements.length)];
+      return `Transform this drawing as if it were ${randomElement}. Create unexpected visual combination. ${keywordStr ? `Original intent: ${keywordStr}` : ""}`;
+    
+    case "expand":
+      return `Take one element from this drawing and explore 4 variations of it. Show different possibilities, scales, and interpretations of the same core form. ${keywordStr ? `Focus on: ${keywordStr}` : ""}`;
+    
+    case "challenge":
+      return `Create something the artist would NOT expect. Break the obvious interpretation. Surprise them with an alternative reading of their marks. Be visually unexpected. ${keywordStr ? `Avoid obvious connection to: ${keywordStr}` : ""}`;
+    
+    default:
+      return "Reinterpret this drawing in a surprising way.";
+  }
+}
+
+export async function generateCreativeResponse(
+  request: ReplicateRequest
+): Promise<ReplicateResponse> {
+  const { imageDataUrl, mode, userKeywords } = request;
+  
+  const replicateProxy = "https://itp-ima-replicate-proxy.web.app/api/create_n_get";
+  
+  // Generate mode-specific prompt
+  const prompt = generatePrompt(mode, userKeywords);
+  
+  // Prepare request data
+  const data = {
+    model: "stability-ai/stable-diffusion-img2img",
+    fieldToConvertBase64ToURL: "image",
+    fileFormat: ".png",
+    input: {
+      image: imageDataUrl,
+      prompt: prompt,
+      negative_prompt: "blurry, low quality, distorted",
+      prompt_strength: 0.75,  // How much to transform (0.5-0.9)
+      num_inference_steps: 30,
+      guidance_scale: 7.5,
+    },
+  };
+  
+  // Adjust strength based on mode
+  if (mode === "opposite" || mode === "challenge") {
+    data.input.prompt_strength = 0.85;  // More transformation
+  } else if (mode === "expand") {
+    data.input.prompt_strength = 0.6;   // Keep more of original
+  }
+  
+  const fetchOptions = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      // Add auth token if needed for higher limits
+      // 'Authorization': `Bearer ${authToken}`,
+    },
+    body: JSON.stringify(data),
+  };
+  
+  try {
+    console.log(`Sending to Replicate (${mode} mode):`, prompt);
+    
+    const response = await fetch(replicateProxy, fetchOptions);
+    
+    if (!response.ok) {
+      const error = await response.json();
+      console.error("Replicate API Error:", error);
+      throw new Error(`Replicate API failed: ${response.status}`);
+    }
+    
+    const prediction = await response.json();
+    console.log("Replicate response:", prediction);
+    
+    // Extract output image URL
+    const outputUrl = Array.isArray(prediction.output) 
+      ? prediction.output[0] 
+      : prediction.output;
+    
+    if (!outputUrl) {
+      throw new Error("No output image from Replicate");
+    }
+    
+    return {
+      imageUrl: outputUrl,
+      mode: mode,
+      prompt: prompt,
+    };
+    
+  } catch (error) {
+    console.error("Error calling Replicate API:", error);
+    throw error;
+  }
+}
