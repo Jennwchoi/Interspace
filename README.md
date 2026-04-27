@@ -120,21 +120,6 @@ All AI API calls are routed through Supabase Edge Functions so keys are never ex
 
 ---
 
-## Running Locally
-
-```bash
-git clone https://github.com/<your-username>/interspace.git
-cd interspace
-npm install
-
-cp .env.example .env
-# Fill in your Supabase credentials
-
-npm run dev
-```
-
-Open [http://localhost:5173](http://localhost:5173).
-
 ### Environment Variables
 
 Client-side (`.env` at project root):
