@@ -178,5 +178,3 @@ Active thesis project · Exhibiting May 2026
 MIT — see [LICENSE](./LICENSE) for details.
 
 ---
-
-*Echo reflects. Imagine expands.*

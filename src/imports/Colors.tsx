@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { canvas, ai } from "@/design-system";
 
 interface ColorsProps {
   className?: string;
@@ -7,18 +8,13 @@ interface ColorsProps {
   recentColors?: string[];
   onRecentColorClick?: (color: string) => void;
   onColorSpaceClick?: (color: string) => void;
+  /** AI-generated swatches — populated by Gemini vision analysis at runtime. */
   emotionPalette?: string[];
 }
 
 function Colors({ className, color = "#1708FF", onChange, recentColors = ['#000000', '#404040', '#737373', '#A3A3A3', '#E5E5E5', '#FFFFFF'], onRecentColorClick, onColorSpaceClick, emotionPalette = [] }: ColorsProps) {
-  
-  // Default palette
-  const defaultPalette = [
-    '#000000', '#FFFFFF', '#FF0000', '#00FF00', 
-    '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A',
-    '#98D8C8', '#F7DC6F', '#BB8FCE', '#85929E'
-  ];
+
+  const defaultPalette = canvas.defaultPalette;
 
   return (
     <div className={className} data-name="Colors">
